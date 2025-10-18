@@ -1,1 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile - Anime Quiz BD</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script src="js/firebase-config.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Profile</h1>
+    <button id="logout">Logout</button>
+    <a href="home.html">Home</a>
+  </header>
 
+  <main>
+    <section id="profile-section">
+      <h2>Your Profile</h2>
+      <p><strong>Name:</strong> <span id="profile-name"></span></p>
+      <p><strong>Email:</strong> <span id="profile-email"></span></p>
+      <p><strong>User ID:</strong> <span id="profile-uid"></span></p>
+      <p><strong>Coins:</strong> <span id="profile-coins">0</span></p>
+    </section>
+  </main>
+
+  <script>
+    const logoutBtn = document.getElementById('logout');
+    logoutBtn.addEventListener('click', () => {
+      auth.signOut().then(() => {
+        window.location = "index.html";
+      });
+    });
+
+    auth.onAuthStateChanged(user => {
+      if(user){
+        const uid = user.uid;
+        const userRef = db.collection("users").doc(uid);
+        userRef.get().then(doc => {
+          if(doc.exists){
+            const data = doc.data();
+            document.getElementById("profile-name").textContent = data.name || "N/A";
+            document.getElementById("profile-email").textContent = data.email || user.email;
+            document.getElementById("profile-uid").textContent = uid;
+            document.getElementById("profile-coins").textContent = data.coins || 0;
+          }
+        });
+      } else {
+        window.location = "index.html";
+      }
+    });
+  </script>
+</body>
+</html>
