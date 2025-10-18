@@ -1,1 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - Anime Quiz BD</title>
+  <link rel="stylesheet" href="css/admin.css">
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script src="js/firebase-config.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Admin Panel</h1>
+    <button id="logout">Logout</button>
+    <a href="home.html">Home</a>
+  </header>
 
+  <main>
+    <section id="admin-section">
+      <h2>Dashboard</h2>
+      <p>Total Users: <span id="total-users">0</span></p>
+      <p>Total Coins Requests: <span id="total-coin-requests">0</span></p>
+      <p>Total Matches Played: <span id="total-matches">0</span></p>
+
+      <h3>User Management</h3>
+      <table id="users-table" border="1">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Coins</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Users will be listed here dynamically -->
+        </tbody>
+      </table>
+
+      <h3>Add Quiz</h3>
+      <form id="add-quiz-form">
+        <input type="text" id="quiz-question" placeholder="Enter question" required>
+        <input type="text" id="quiz-option1" placeholder="Option 1" required>
+        <input type="text" id="quiz-option2" placeholder="Option 2" required>
+        <input type="text" id="quiz-option3" placeholder="Option 3" required>
+        <input type="text" id="quiz-option4" placeholder="Option 4" required>
+        <input type="number" id="quiz-answer" placeholder="Correct option (1-4)" required>
+        <button type="submit">Add Quiz</button>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const logoutBtn = document.getElementById('logout');
+    logoutBtn.addEventListener('click', () => {
+      auth.signOut().then(() => {
+        window.location = "index.html";
+      });
+    });
+
+    auth.onAuthStateChanged(user => {
+      if(user){
+        // Only admin email allowed
+        if(user.email !== "jisan427768@gmail.com"){
+          window.location = "index.html";
+        } else {
+          loadAdminData();
+        }
+      } else {
+        window.location = "index.html";
+      }
+    });
+
+    function loadAdminData(){
+      const usersTable = document.querySelector("#users-table tbody");
+      const totalUsersEl = document.getElementById("total-users");
+      const totalCoinRequestsEl = document.getElementById("total-coin-requests");
+      const totalMatchesEl = document.getElementById("total-matches");
+
+      // Fetch Users
+      db.collection("users").get().then(snapshot => {
+        totalUsersEl.textContent = snapshot.size;
+        usersTable.innerHTML = "";
+        snapshot.forEach(doc => {
+          const user = doc.data();
+          const row = `<tr>
+            <td>${user.name}</td>
+            <td>${user.email}</td>
+            <td>${user.coins || 0}</td>
+            <td>
+              <button onclick="banUser('${doc.id}')">Ban</button>
+              <button onclick="unbanUser('${doc.id}')">Unban</button>
+            </td>
+          </tr>`;
+          usersTable.innerHTML += row;
+        });
+      });
+
+      // Coin Requests & Matches example (placeholder)
+      db.collection("coinRequests").get().then(snap => {
+        totalCoinRequestsEl.textContent = snap.size;
+      });
+      db.collection("matches").get().then(snap => {
+        totalMatchesEl.textContent = snap.size;
+      });
+    }
+
+    function banUser(uid){
+      db.collection("users").doc(uid).update({banned: true}).then(()=> alert("User banned"));
+    }
+
+    function unbanUser(uid){
+      db.collection("users").doc(uid).update({banned: false}).then(()=> alert("User unbanned"));
+    }
+
+    // Add Quiz
+    const addQuizForm = document.getElementById("add-quiz-form");
+    addQuizForm.addEventListener("submit", e=>{
+      e.preventDefault();
+      const question = document.getElementById("quiz-question").value;
+      const opt1 = document.getElementById("quiz-option1").value;
+      const opt2 = document.getElementById("quiz-option2").value;
+      const opt3 = document.getElementById("quiz-option3").value;
+      const opt4 = document.getElementById("quiz-option4").value;
+      const answer = Number(document.getElementById("quiz-answer").value);
+
+      db.collection("quiz").add({
+        question: question,
+        options: [opt1, opt2, opt3, opt4],
+        answer: answer
+      }).then(()=> alert("Quiz added!"));
+    });
+  </script>
+</body>
+  </html>
