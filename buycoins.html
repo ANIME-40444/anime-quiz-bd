@@ -1,1 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buy Coins - Anime Quiz BD</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script src="js/firebase-config.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Buy Coins</h1>
+    <button id="logout">Logout</button>
+    <a href="home.html">Home</a>
+  </header>
 
+  <main>
+    <section id="payment-section">
+      <h2>Choose Payment Method</h2>
+      <div class="payment-box" data-number="01305736690">
+        <img src="assets/images/bkash.png" alt="Bkash">
+        <p>Bkash: 01305736690</p>
+      </div>
+      <div class="payment-box" data-number="01603599843">
+        <img src="assets/images/nagad.png" alt="Nagad">
+        <p>Nagad: 01603599843</p>
+      </div>
+      <div class="payment-box" data-number="01603599843">
+        <img src="assets/images/rocket.png" alt="Rocket">
+        <p>Rocket: 01603599843</p>
+      </div>
+
+      <div>
+        <label for="trx-id">Transaction ID:</label>
+        <input type="text" id="trx-id" placeholder="Enter Transaction ID">
+      </div>
+
+      <button id="confirm-order">Confirm Order</button>
+
+      <p id="order-status"></p>
+    </section>
+  </main>
+
+  <script>
+    const logoutBtn = document.getElementById('logout');
+    logoutBtn.addEventListener('click', () => {
+      auth.signOut().then(() => {
+        window.location = "index.html";
+      });
+    });
+
+    const paymentBoxes = document.querySelectorAll(".payment-box");
+    let selectedNumber = "";
+
+    paymentBoxes.forEach(box => {
+      box.addEventListener("click", () => {
+        selectedNumber = box.dataset.number;
+        navigator.clipboard.writeText(selectedNumber);
+        alert(`Number ${selectedNumber} copied to clipboard!`);
+      });
+    });
+
+    const confirmBtn = document.getElementById("confirm-order");
+    confirmBtn.addEventListener("click", () => {
+      const trxId = document.getElementById("trx-id").value.trim();
+      if(!selectedNumber || !trxId){
+        alert("Please select a payment method and enter Transaction ID.");
+        return;
+      }
+
+      auth.onAuthStateChanged(user => {
+        if(user){
+          const orderId = "ORD" + Date.now();
+          db.collection("orders").doc(orderId).set({
+            userId: user.uid,
+            paymentNumber: selectedNumber,
+            transactionId: trxId,
+            status: "Pending",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          }).then(() => {
+            document.getElementById("order-status").textContent = `Order ${orderId} is Pending. Our admin will confirm soon.`;
+          });
+        }
+      });
+    });
+  </script>
+</body>
+</html>
