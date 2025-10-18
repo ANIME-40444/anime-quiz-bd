@@ -5,21 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Anime Quiz BD - Login</title>
   <link rel="stylesheet" href="css/style.css">
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-  <script src="js/firebase-config.js"></script>
 </head>
 <body>
-  <div class="container">
-    <h1>Login</h1>
-    <form id="login-form">
-      <input type="email" id="email" placeholder="Email" required>
-      <input type="password" id="password" placeholder="Password" required minlength="6">
-      <button type="submit">Login</button>
-    </form>
+  <div class="login-container">
+    <img src="assets/images/logo.png" alt="Anime Quiz BD Logo" class="logo">
+    <h2>Login</h2>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <button id="loginBtn">Login</button>
     <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
+    <p id="error-msg" class="error-msg"></p>
   </div>
 
-  <script src="js/auth.js"></script>
+  <script type="module" src="js/auth.js"></script>
 </body>
 </html>
