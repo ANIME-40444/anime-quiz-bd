@@ -1,1 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Battle Quiz - Anime Quiz BD</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script src="js/firebase-config.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Anime Battle Quiz</h1>
+    <button id="logout">Logout</button>
+    <a href="home.html">Home</a>
+  </header>
 
+  <main>
+    <section id="quiz-section">
+      <h2>Quiz</h2>
+      <div id="question-box">
+        <p id="question-text">Loading question...</p>
+        <div id="options">
+          <button class="option-btn" data-index="0"></button>
+          <button class="option-btn" data-index="1"></button>
+          <button class="option-btn" data-index="2"></button>
+          <button class="option-btn" data-index="3"></button>
+        </div>
+      </div>
+      <p>Coins: <span id="coins">0</span></p>
+      <p>Time Left: <span id="timer">5</span> sec</p>
+    </section>
+  </main>
+
+  <script src="js/quiz.js"></script>
+  <script>
+    const logoutBtn = document.getElementById('logout');
+    logoutBtn.addEventListener('click', () => {
+      auth.signOut().then(() => {
+        window.location = "index.html";
+      });
+    });
+
+    auth.onAuthStateChanged(user => {
+      if(user){
+        loadQuiz();
+      } else {
+        window.location = "index.html";
+      }
+    });
+  </script>
+</body>
+</html>
