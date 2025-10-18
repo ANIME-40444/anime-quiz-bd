@@ -1,104 +1,113 @@
-<!-- home.html -->
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Anime Quiz Vs - Home</title>
-  <link rel="stylesheet" href="css/style.css">
-  <!-- firebase-config.js must export `auth` and `db` (modular) -->
-  <script type="module" src="js/home.js" defer></script>
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-  <header class="site-header">
-    <div class="left">
-      <img src="assets/images/logo.png" alt="Anime Quiz BD Logo" class="logo">
-      <h1 class="brand">Anime Quiz Vs</h1>
-    </div>
-    <div class="right">
-      <button id="threeDotBtn" class="three-dot">⋯</button>
-    </div>
-  </header>
 
-  <!-- 3-dot menu panel (hidden by default) -->
-  <div id="threeDotMenu" class="three-dot-panel hidden">
-    <button id="menuProfile">Profile</button>
-    <button id="menuLeaderboard">Top Players</button>
-    <button id="menuRules">Game Rules</button>
-    <button id="menuDeposit">Deposit (Buy Coins)</button>
-    <button id="menuWithdraw">Withdraw</button>
-    <button id="menuOrders">My Orders</button>
-    <button id="menuLogout">Logout</button>
+  <div class="container">
+    <div class="logo">
+      <img src="assets/images/logo.png" alt="Anime Quiz BD Logo" width="130">
+    </div>
+
+    <h2>Welcome, <span id="username">User</span> 👋</h2>
+    <p id="email"></p>
+    <p>Coins: <span id="coins">0</span> | Matches Played: <span id="matches">0</span></p>
+
+    <button id="playQuiz">🎮 Play Battle Quiz</button>
+    <button id="buyCoins">💰 Buy Coins</button>
+    <button id="withdraw">🏦 Withdraw</button>
+
+    <div class="section">
+      <h3>📢 Important Info</h3>
+      <p>🎯 জয় করলে +5 coins, হারলে -5 coins (প্রতি ব্যাটলে)।</p>
+      <p>⚡ প্রতিদিন সর্বাধিক 20টি ম্যাচ খেলা যাবে।</p>
+      <p>💰 Deposit ও Withdraw করতে নিচের বাটন ব্যবহার করো।</p>
+    </div>
+
+    <div class="section">
+      <h3>👤 Profile</h3>
+      <p><strong>Name:</strong> <span id="pname">---</span></p>
+      <p><strong>Email:</strong> <span id="pemail">---</span></p>
+      <p><strong>User ID:</strong> <span id="pid">---</span></p>
+      <p><strong>Coins:</strong> <span id="pcoins">0</span></p>
+    </div>
+
+    <div class="section">
+      <h3>⚔️ Game Rules</h3>
+      <p>✔️ জয় = +5 coins</p>
+      <p>❌ হার = -5 coins</p>
+      <p>⏱️ প্রতিটি প্রশ্নের নির্দিষ্ট সময়সীমা থাকবে।</p>
+      <p>💵 Deposit বা Withdraw করতে আলাদা পেজে যাও।</p>
+    </div>
+
+    <footer>
+      Support: <a href="https://wa.me/01603999843">WhatsApp 01603999843</a><br>
+      &copy; 2025 Anime Quiz Vs
+    </footer>
+
+    <button id="logout">🚪 Logout</button>
   </div>
 
-  <main class="main">
-    <section id="dashboard" class="card">
-      <h2>Welcome, <span id="userName">User</span></h2>
-      <p>Email: <span id="userEmail">-</span></p>
-      <p>Coins: <strong id="userCoins">0</strong> &nbsp; | &nbsp; Matches played: <span id="matchesPlayed">0</span> / 20</p>
+  <!-- Firebase Setup -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-      <div class="home-actions">
-        <button id="playQuizBtn">Play Battle Quiz</button>
-        <a href="buycoins.html"><button>Buy Coins</button></a>
-        <a href="withdraw.html"><button>Withdraw</button></a>
-      </div>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAcZFYdlxrsHP4viRStmRY_tTbL42wGplE",
+      authDomain: "anime-quiz-vs.firebaseapp.com",
+      projectId: "anime-quiz-vs",
+      storageBucket: "anime-quiz-vs.appspot.com",
+      messagingSenderId: "1079976537090",
+      appId: "1:1079976537090:web:32f14ee301c37031fb6bd1"
+    };
 
-      <p class="note">Important: জিতলে +5 coins, হারলে -5 coins (প্রতি প্রশ্ন)। প্রতিটি ইউজার সর্বাধিক 20টি ম্যাচ খেলতে পারবেন।</p>
-    </section>
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    <!-- QUIZ SECTION (inline) -->
-    <section id="quizSection" class="card hidden">
-      <div class="quiz-header">
-        <h3 id="quizTitle">Battle Quiz</h3>
-        <p>Question <span id="qIndex">0</span> / <span id="qTotal">0</span></p>
-      </div>
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
 
-      <div id="quizBox">
-        <p id="questionText" class="question">Loading question...</p>
-        <div id="optionsDiv" class="options"></div>
-        <p class="timer">Time left: <span id="timer">5</span>s</p>
-        <p id="quizMsg" class="small muted"></p>
-        <div class="quiz-controls">
-          <button id="finishQuizBtn">Finish Quiz</button>
-        </div>
-      </div>
-    </section>
+        if (userSnap.exists()) {
+          const data = userSnap.data();
+          document.getElementById("username").innerText = data.name || "User";
+          document.getElementById("email").innerText = user.email;
+          document.getElementById("coins").innerText = data.coins || 0;
+          document.getElementById("matches").innerText = data.matches || 0;
+          document.getElementById("pname").innerText = data.name || "User";
+          document.getElementById("pemail").innerText = user.email;
+          document.getElementById("pid").innerText = user.uid;
+          document.getElementById("pcoins").innerText = data.coins || 0;
+        }
+      } else {
+        window.location.href = "login.html";
+      }
+    });
 
-    <!-- PROFILE, LEADERBOARD, RULES, ORDERS panels (shared, toggled) -->
-    <section id="profileSection" class="card hidden">
-      <h3>Profile</h3>
-      <p>Name: <span id="profile_name"></span></p>
-      <p>Email: <span id="profile_email"></span></p>
-      <p>User ID: <span id="profile_uid"></span></p>
-      <p>Coins: <span id="profile_coins"></span></p>
-    </section>
+    document.getElementById("logout").addEventListener("click", () => {
+      signOut(auth).then(() => {
+        window.location.href = "login.html";
+      });
+    });
 
-    <section id="leaderboardSection" class="card hidden">
-      <h3>Top Players</h3>
-      <ol id="topPlayersList"></ol>
-    </section>
+    document.getElementById("buyCoins").addEventListener("click", () => {
+      window.location.href = "buy-coins.html";
+    });
+    document.getElementById("withdraw").addEventListener("click", () => {
+      window.location.href = "withdraw.html";
+    });
+    document.getElementById("playQuiz").addEventListener("click", () => {
+      window.location.href = "quiz.html";
+    });
+  </script>
 
-    <section id="rulesSection" class="card hidden">
-      <h3>Game Rules</h3>
-      <ul>
-        <li>প্রতিটি প্রশ্নের জন্য সময়: 5 সেকেন্ড।</li>
-        <li>সঠিক: +5 coins, ভুল বা টাইমআউট: -5 coins (কয়েন কখনই নেগেটিভ হবে না)।</li>
-        <li>প্রতি ইউজার সর্বোচ্চ 20 ম্যাচ খেলতে পারবে।</li>
-        <li>কয়েন না থাকলে কুইজ খেলানো যাবে না — প্রথমে Deposit করে coins ভরো।</li>
-        <li>Deposit করতে Buy Coins পেজ দেখো; Withdraw পৃষ্ঠায় Withdraw রিকুয়েস্ট করা যাবে।</li>
-      </ul>
-      <p>Support: WhatsApp 01603599843</p>
-    </section>
-
-    <section id="ordersSection" class="card hidden">
-      <h3>My Orders / Payments</h3>
-      <ul id="ordersList"></ul>
-    </section>
-
-  </main>
-
-  <footer class="site-footer">
-    <p>© Anime Quiz Vs</p>
-  </footer>
 </body>
-  </html>
+</html>
