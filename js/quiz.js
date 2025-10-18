@@ -1,91 +1,117 @@
-const quizContainer = document.getElementById('quiz-container');
-const questionEl = document.getElementById('question');
-const optionsEl = document.getElementById('options');
-const timerEl = document.getElementById('timer');
-const userCoinsEl = document.getElementById('user-coins');
+// js/quiz.js
+const questionText = document.getElementById("question-text");
+const optionBtns = document.querySelectorAll(".option-btn");
+const coinsEl = document.getElementById("coins");
+const timerEl = document.getElementById("timer");
 
-let currentQuestion = 0;
-let questions = [
-  {
-    question: "Which anime features a character named Goku?",
-    options: ["Naruto", "Dragon Ball", "One Piece", "Bleach"],
-    answer: "Dragon Ball"
-  },
-  {
-    question: "In Naruto, who is Naruto's rival?",
-    options: ["Sasuke", "Goku", "Luffy", "Ichigo"],
-    answer: "Sasuke"
-  },
-  // আরও question এভাবে add করতে পারো
-];
-
-let timer = 5;
-let coinValue = 5;
+let quizData = [];
+let currentIndex = 0;
+let coins = 0;
+let timer;
 let currentUser;
 
+// Firebase Auth state check
 auth.onAuthStateChanged(user => {
   if(user){
     currentUser = user;
-    db.collection("users").doc(user.uid).get().then(doc => {
-      if(doc.exists){
-        userCoinsEl.textContent = doc.data().coins;
-      }
-    });
-    loadQuestion();
+    loadUserCoins();
+    loadQuiz();
   } else {
     window.location = "index.html";
   }
 });
 
-function loadQuestion(){
-  if(currentQuestion >= questions.length) {
-    alert("You have completed the quiz!");
+// Load user coins from Firebase
+function loadUserCoins(){
+  db.collection("users").doc(currentUser.uid).get().then(doc=>{
+    coins = doc.data()?.coins || 0;
+    coinsEl.textContent = coins;
+  });
+}
+
+// Load quiz data from Firebase
+function loadQuiz() {
+  db.collection("quiz").get().then(snapshot => {
+    quizData = snapshot.docs.map(doc => doc.data());
+    shuffle(quizData);
+    showQuestion();
+  });
+}
+
+// Display question and options
+function showQuestion() {
+  if(currentIndex >= quizData.length){
+    alert("Quiz finished!");
     return;
   }
-
-  let q = questions[currentQuestion];
-  questionEl.textContent = q.question;
-  optionsEl.innerHTML = "";
-  q.options.forEach(opt => {
-    let btn = document.createElement("button");
-    btn.textContent = opt;
-    btn.addEventListener("click", () => checkAnswer(opt, q.answer));
-    optionsEl.appendChild(btn);
+  const q = quizData[currentIndex];
+  questionText.textContent = q.question;
+  optionBtns.forEach((btn, idx) => {
+    btn.textContent = q.options[idx];
+    btn.style.backgroundColor = '';
+    btn.disabled = false;
+    btn.dataset.index = idx;
   });
+  startTimer();
+}
 
-  timer = 5;
-  timerEl.textContent = `Time Left: ${timer}s`;
-  let countdown = setInterval(() => {
-    timer--;
-    timerEl.textContent = `Time Left: ${timer}s`;
-    if(timer <= 0){
-      clearInterval(countdown);
-      alert("Time's up!");
-      nextQuestion(false);
+// Start 5-second timer
+function startTimer(){
+  let time = 5;
+  timerEl.textContent = `Time Left: ${time}s`;
+  clearInterval(timer);
+  timer = setInterval(()=>{
+    time--;
+    timerEl.textContent = `Time Left: ${time}s`;
+    if(time <= 0){
+      clearInterval(timer);
+      checkAnswer(-1); // time up = wrong
     }
   }, 1000);
 }
 
-function checkAnswer(selected, correct){
+// Add click events for options
+optionBtns.forEach(btn => {
+  btn.addEventListener("click", e=>{
+    const selected = parseInt(e.target.dataset.index);
+    checkAnswer(selected);
+  });
+});
+
+// Check answer and update coins
+function checkAnswer(selected){
+  clearInterval(timer);
+  const correct = quizData[currentIndex].answer - 1;
+  optionBtns.forEach((btn, idx)=>{
+    btn.disabled = true;
+    if(idx === correct){
+      btn.style.backgroundColor = "green";
+    } else if(idx === selected){
+      btn.style.backgroundColor = "red";
+    }
+  });
+
   if(selected === correct){
-    alert("Correct!");
-    updateCoins(coinValue);
-    nextQuestion(true);
+    coins += 5;
   } else {
-    alert("Wrong!");
-    updateCoins(-coinValue);
-    nextQuestion(false);
+    coins = Math.max(0, coins - 5);
   }
+
+  coinsEl.textContent = coins;
+
+  // Update coins in Firebase
+  db.collection("users").doc(currentUser.uid).update({coins});
+
+  setTimeout(()=>{
+    currentIndex++;
+    showQuestion();
+  }, 1000);
 }
 
-function nextQuestion(isCorrect){
-  currentQuestion++;
-  loadQuestion();
-}
-
-function updateCoins(amount){
-  let newCoins = parseInt(userCoinsEl.textContent) + amount;
-  if(newCoins < 0) newCoins = 0;
-  userCoinsEl.textContent = newCoins;
-  db.collection("users").doc(currentUser.uid).update({coins: newCoins});
+// Shuffle quiz questions
+function shuffle(array){
+  for(let i = array.length-1; i>0; i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
 }
