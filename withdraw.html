@@ -1,1 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Withdraw Coins - Anime Quiz BD</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script src="js/firebase-config.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Withdraw Coins</h1>
+    <button id="logout">Logout</button>
+    <a href="home.html">Home</a>
+  </header>
 
+  <main>
+    <section id="withdraw-section">
+      <h2>Withdraw Coins</h2>
+      <p>Your Balance: <span id="balance">0</span> Coins</p>
+      <div>
+        <label for="withdraw-number">Payment Number:</label>
+        <input type="text" id="withdraw-number" placeholder="Enter your payment number">
+      </div>
+      <button id="withdraw-btn">Withdraw</button>
+      <p id="withdraw-status"></p>
+    </section>
+  </main>
+
+  <script>
+    const logoutBtn = document.getElementById('logout');
+    logoutBtn.addEventListener('click', () => {
+      auth.signOut().then(() => {
+        window.location = "index.html";
+      });
+    });
+
+    const balanceEl = document.getElementById("balance");
+    const withdrawBtn = document.getElementById("withdraw-btn");
+    const withdrawStatus = document.getElementById("withdraw-status");
+    const withdrawNumberInput = document.getElementById("withdraw-number");
+
+    auth.onAuthStateChanged(user => {
+      if(user){
+        const userRef = db.collection("users").doc(user.uid);
+        userRef.get().then(doc => {
+          if(doc.exists){
+            balanceEl.textContent = doc.data().coins || 0;
+          }
+        });
+      } else {
+        window.location = "index.html";
+      }
+    });
+
+    withdrawBtn.addEventListener("click", () => {
+      auth.onAuthStateChanged(user => {
+        if(user){
+          const withdrawNumber = withdrawNumberInput.value.trim();
+          if(!withdrawNumber){
+            alert("Enter your payment number");
+            return;
+          }
+
+          const userRef = db.collection("users").doc(user.uid);
+          userRef.get().then(doc => {
+            if(doc.exists){
+              const coins = doc.data().coins || 0;
+              if(coins >= 50){
+                // Deduct 50 coins
+                userRef.update({coins: coins - 50});
+                withdrawStatus.textContent = "Thank you for withdraw. Your request is processing, admin will confirm soon.";
+              } else {
+                withdrawStatus.textContent = "Insufficient balance. You need at least 50 coins to withdraw.";
+              }
+            }
+          });
+        }
+      });
+    });
+  </script>
+</body>
+</html>
